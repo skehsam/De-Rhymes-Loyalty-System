@@ -1,0 +1,11 @@
+{
+  "name": "de-rhymes-loyalty-functions",
+  "description": "Sends WhatsApp/email notifications queued by the De Rhymes Loyalty app",
+  "engines": { "node": "20" },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.1.0",
+    "firebase-functions": "^4.9.0"
+  },
+  "private": true
+}

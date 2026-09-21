@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>De Rhymes Loyalty</title>
+<link rel="icon" type="image/png" href="assets/logo-badge.png">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="login-screen">
+  <div class="login-card">
+    <img class="login-logo" src="assets/logo.png" alt="De Rhymes">
+    <p class="login-sub">Loyalty &amp; membership console</p>
+    <form id="login-form">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="login-email" autocomplete="username" required>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label>Password</label>
+        <input type="password" id="login-password" autocomplete="current-password" required>
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <div class="login-note" id="login-note"></div>
+      <button class="btn btn-primary btn-block" type="submit" style="margin-top:6px;">Sign in</button>
+      <button type="button" class="link-btn" id="btn-forgot">Forgot password?</button>
+    </form>
+    <p class="hint" style="margin-top:16px;">First sign-in on a fresh project becomes Super Admin automatically.</p>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+  <!-- Mobile top bar (hidden on desktop) -->
+  <header class="topbar">
+    <button type="button" class="topbar-btn" id="btn-nav-toggle" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false"><span></span><span></span><span></span></button>
+    <img class="topbar-logo" src="assets/logo-badge.png" alt="">
+    <span class="topbar-title">De Rhymes</span>
+    <button type="button" class="btn btn-sm btn-gold" data-add-member data-requires="manageMembers">+ Member</button>
+  </header>
+  <div class="scrim" id="nav-scrim"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <img src="assets/logo-badge.png" alt="De Rhymes">
+      <div class="brand-text">De Rhymes<small>LOYALTY CONSOLE</small></div>
+    </div>
+
+    <button type="button" class="nav-cta" data-add-member data-requires="manageMembers">+ New member</button>
+
+    <nav class="nav" id="nav" aria-label="Main">
+      <div class="nav-group">
+        <div class="nav-group-label">DAILY USE</div>
+        <button type="button" class="nav-item" data-view="dashboard" data-requires="viewDashboard"><span class="dot"></span>Dashboard</button>
+        <button type="button" class="nav-item" data-view="checkout" data-requires="recordPurchase"><span class="dot"></span>Scan &amp; Checkout</button>
+        <button type="button" class="nav-item" data-view="members" data-requires="manageMembers"><span class="dot"></span>Members</button>
+        <button type="button" class="nav-item" data-view="redeem" data-requires="redeemPoints"><span class="dot"></span>Redeem Points</button>
+        <button type="button" class="nav-item" data-view="adjust" data-requires="manualAdjustment"><span class="dot"></span>Manual Adjustment</button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">RECORDS</div>
+        <button type="button" class="nav-item" data-view="transactions" data-requires="viewReports"><span class="dot"></span>Transactions</button>
+        <button type="button" class="nav-item" data-view="notifications" data-requires="viewReports"><span class="dot"></span>Notifications</button>
+        <button type="button" class="nav-item" data-view="reports" data-requires="viewReports"><span class="dot"></span>Reports</button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">ADMIN</div>
+        <button type="button" class="nav-item" data-view="classes" data-requires="manageClasses"><span class="dot"></span>Customer Classes</button>
+        <button type="button" class="nav-item" data-view="settings" data-requires="editLoyaltyRules"><span class="dot"></span>Loyalty Settings</button>
+        <button type="button" class="nav-item" data-view="staff" data-requires="manageStaff"><span class="dot"></span>Staff &amp; Roles</button>
+        <button type="button" class="nav-item" data-view="audit" data-requires="viewAuditLog"><span class="dot"></span>Audit Log</button>
+      </div>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="who" id="who-name">—</div>
+      <div class="role" id="who-role">—</div>
+      <button id="btn-logout">Sign out</button>
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- ---------- DASHBOARD ---------- -->
+    <section class="view" id="view-dashboard">
+      <div class="page-head">
+        <div><h1>Dashboard</h1><p>Today's loyalty program performance at a glance.</p></div>
+        <div class="page-actions">
+          <button class="btn" data-view-link="checkout">Scan &amp; Checkout</button>
+          <button class="btn btn-primary" data-add-member>+ Add member</button>
+        </div>
+      </div>
+      <div id="dash-stats" class="grid grid-4"></div>
+      <div class="grid grid-2" style="margin-top:16px;">
+        <div class="panel">
+          <p class="panel-title">Purchase activity (recent)</p>
+          <div id="dash-chart"></div>
+        </div>
+        <div class="panel">
+          <p class="panel-title">Recent transactions</p>
+          <div id="dash-recent"></div>
+        </div>
+        <div class="panel">
+          <p class="panel-title">Points issued vs redeemed (7 days)</p>
+          <div id="dash-chart-points"></div>
+        </div>
+        <div class="panel">
+          <p class="panel-title">Members by class</p>
+          <div id="dash-classes"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- CHECKOUT / SCAN ---------- -->
+    <section class="view" id="view-checkout">
+      <div class="page-head">
+        <div><h1>Scan &amp; Checkout</h1><p>Identify a member, record a purchase, points are calculated automatically.</p></div>
+      </div>
+
+      <div class="checkout-steps" id="checkout-steps">
+        <div class="step active" data-step="1">1 · Identify</div>
+        <div class="step" data-step="2">2 · Profile</div>
+        <div class="step" data-step="3">3 · Purchase</div>
+        <div class="step" data-step="4">4 · Confirm</div>
+      </div>
+
+      <div class="panel" id="checkout-step-1">
+        <p class="panel-title">Find the member</p>
+        <div class="search-row">
+          <input type="text" id="checkout-search" placeholder="Search by name, phone, email or Member ID…">
+          <button class="btn" id="btn-open-scanner">Scan QR / Barcode</button>
+        </div>
+        <div id="checkout-search-results"></div>
+      </div>
+
+      <div class="panel" id="checkout-step-2" style="display:none;"></div>
+      <div class="panel" id="checkout-step-3" style="display:none;"></div>
+      <div class="panel" id="checkout-step-4" style="display:none;"></div>
+    </section>
+
+    <!-- ---------- MEMBERS ---------- -->
+    <section class="view" id="view-members">
+      <div class="page-head">
+        <div><h1>Members</h1><p>Every registered loyalty member, searchable by name, phone, email, or ID.</p></div>
+        <div class="page-actions">
+          <button class="btn" id="btn-open-scanner-2">Scan member</button>
+          <button class="btn btn-primary" id="btn-add-member" data-add-member>+ Add member</button>
+        </div>
+      </div>
+      <div class="search-row">
+        <input type="text" id="members-search" placeholder="Search members…">
+        <select id="members-filter-status"><option value="">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+        <select id="members-filter-class"><option value="">All classes</option></select>
+        <button class="btn" id="btn-export-members">Export CSV</button>
+      </div>
+      <div class="panel" style="padding:0; overflow-x:auto;">
+        <table class="ledger" id="members-table">
+          <thead><tr>
+            <th>Member</th><th>Member ID</th><th>Class</th><th class="num">Points</th><th class="num">Total spent</th><th>Status</th>
+          </tr></thead>
+          <tbody id="members-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------- MEMBER PROFILE ---------- -->
+    <section class="view" id="view-member-profile">
+      <div class="page-head">
+        <div>
+          <button class="btn btn-sm btn-ghost" id="btn-back-members">&larr; Back to members</button>
+          <h1 id="mp-name" style="margin-top:8px;">Member</h1>
+          <p id="mp-sub"></p>
+        </div>
+        <div class="page-actions">
+          <button class="btn" id="mp-edit">Edit details</button>
+          <button class="btn" id="mp-birthday">🎂 Send birthday message</button>
+          <button class="btn" id="mp-reissue">Reissue card</button>
+          <button class="btn btn-danger" id="mp-toggle-status">Deactivate member</button>
+          <button class="btn btn-primary" id="mp-charge">Record purchase</button>
+        </div>
+      </div>
+
+      <div class="grid profile-grid">
+        <div id="mp-card-host"></div>
+        <div>
+          <div class="grid grid-3" id="mp-stats"></div>
+          <div class="panel" style="margin-top:16px;">
+            <div class="tabs" id="mp-tabs">
+              <div class="tab active" data-tab="overview">Overview</div>
+              <div class="tab" data-tab="purchases">Purchases</div>
+              <div class="tab" data-tab="points">Points</div>
+              <div class="tab" data-tab="redemptions">Redemptions</div>
+              <div class="tab" data-tab="notifications">Notifications</div>
+              <div class="tab" data-tab="membership">Membership</div>
+            </div>
+            <div id="mp-tab-content"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- REDEEM ---------- -->
+    <section class="view" id="view-redeem">
+      <div class="page-head"><div><h1>Redeem Points</h1><p>Convert a member's points to their cash value.</p></div></div>
+      <div class="panel" style="max-width:520px;">
+        <div class="search-row">
+          <input type="text" id="redeem-search" placeholder="Search member by name, phone or Member ID…">
+        </div>
+        <div id="redeem-body"></div>
+      </div>
+    </section>
+
+    <!-- ---------- MANUAL ADJUSTMENT ---------- -->
+    <section class="view" id="view-adjust">
+      <div class="page-head"><div><h1>Manual Point Adjustment</h1><p>Add, give bonus, remove or reverse points outside the normal purchase flow. Every adjustment is logged with a reason.</p></div></div>
+      <div class="panel" style="max-width:520px;">
+        <div class="search-row">
+          <input type="text" id="adjust-search" placeholder="Search member by name, phone or Member ID…">
+        </div>
+        <div id="adjust-body"></div>
+      </div>
+    </section>
+
+    <!-- ---------- CLASSES ---------- -->
+    <section class="view" id="view-classes">
+      <div class="page-head">
+        <div><h1>Customer Classes</h1><p>Define loyalty tiers and their point multipliers. Multipliers apply to base points, never to naira amounts.</p></div>
+        <div class="page-actions"><button class="btn btn-primary" id="btn-add-class">+ New class</button></div>
+      </div>
+      <div class="panel" style="margin-bottom:16px;">
+        <div class="checkbox-row">
+          <input type="checkbox" id="auto-class-toggle">
+          <label for="auto-class-toggle">Automatically upgrade/downgrade members when their total spend crosses a class threshold</label>
+        </div>
+      </div>
+      <div class="panel" style="padding:0; overflow-x:auto;">
+        <table class="ledger" id="classes-table">
+          <thead><tr><th>Class</th><th class="num">Multiplier</th><th class="num">Min spend</th><th class="num">Max spend</th><th>Status</th><th></th></tr></thead>
+          <tbody id="classes-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------- SETTINGS ---------- -->
+    <section class="view" id="view-settings">
+      <div class="page-head"><div><h1>Loyalty Settings</h1><p>The base earning rule and point value that drive every calculation.</p></div></div>
+      <div class="grid grid-2">
+        <div class="panel">
+          <p class="panel-title">Base earning rule</p>
+          <div class="field-row">
+            <div class="field"><label>Amount spent required (₦)</label><input type="number" id="set-base-amount" min="1"></div>
+            <div class="field"><label>Base points awarded</label><input type="number" id="set-base-points" min="1"></div>
+          </div>
+          <p class="hint" id="set-rule-preview" style="margin-top:10px;"></p>
+        </div>
+        <div class="panel">
+          <p class="panel-title">Point value</p>
+          <div class="field"><label>1 point equals (₦)</label><input type="number" id="set-point-value" min="0" step="0.01"></div>
+          <p class="hint" id="set-value-preview" style="margin-top:10px;"></p>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px;">
+        <p class="panel-title">Notifications</p>
+        <div class="checkbox-row" style="margin-bottom:10px;"><input type="checkbox" id="set-whatsapp"><label for="set-whatsapp">WhatsApp notifications enabled</label></div>
+        <div class="checkbox-row" style="margin-bottom:10px;"><input type="checkbox" id="set-email"><label for="set-email">Email notifications enabled</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="set-birthday"><label for="set-birthday">Birthday messages enabled</label></div>
+        <p class="hint" style="margin-top:10px;">Sent automatically once a day to every active member whose date of birth is today (needs the scheduled Cloud Function deployed — see README). Staff can also send one early from a member's profile.</p>
+      </div>
+      <div class="grid grid-2" style="margin-top:16px;">
+        <div class="panel">
+          <p class="panel-title">Redemption limits</p>
+          <div class="field-row">
+            <div class="field"><label>Minimum points per redemption</label><input type="number" id="set-min-redeem" min="0"></div>
+            <div class="field"><label>Maximum points per redemption</label><input type="number" id="set-max-redeem" min="0"></div>
+          </div>
+          <p class="hint" style="margin-top:10px;">Use 0 for no limit.</p>
+        </div>
+        <div class="panel">
+          <p class="panel-title">Point expiration</p>
+          <div class="field"><label>Expire points after this many months of no activity</label><input type="number" id="set-expiry-months" min="0"></div>
+          <p class="hint" style="margin-top:10px;">0 = points never expire. Expiry only happens when you press the button — it is never automatic. Activity means earning, redeeming, or an adjustment.</p>
+          <button class="btn btn-sm btn-danger" type="button" id="btn-run-expiry" style="margin-top:10px;">Run expiry now</button>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px;">
+        <p class="panel-title">Business information</p>
+        <div class="field-row">
+          <div class="field"><label>Business name</label><input type="text" id="set-biz-name"></div>
+          <div class="field"><label>Phone</label><input type="text" id="set-biz-phone"></div>
+        </div>
+        <div class="field-row" style="margin-top:12px;">
+          <div class="field"><label>Address</label><input type="text" id="set-biz-address"></div>
+          <div class="field"><label>Email</label><input type="email" id="set-biz-email"></div>
+        </div>
+        <p class="hint" style="margin-top:10px;">Shown on printed membership cards.</p>
+      </div>
+      <div class="panel" style="margin-top:16px;">
+        <p class="panel-title">Notification templates</p>
+        <div id="set-templates"></div>
+      </div>
+      <button class="btn btn-primary" id="btn-save-settings" style="margin-top:16px;">Save settings</button>
+    </section>
+
+    <!-- ---------- TRANSACTIONS ---------- -->
+    <section class="view" id="view-transactions">
+      <div class="page-head"><div><h1>Transaction History</h1><p>Every purchase, redemption, adjustment, refund and class change — permanently recorded.</p></div></div>
+      <div class="search-row">
+        <input type="text" id="tx-filter-member" placeholder="Member name or ID">
+        <input type="date" id="tx-filter-from" title="From date" aria-label="From date">
+        <input type="date" id="tx-filter-to" title="To date" aria-label="To date">
+        <select id="tx-filter-staff"><option value="">All staff</option></select>
+        <select id="tx-filter-class"><option value="">All classes</option></select>
+        <select id="tx-filter-type">
+          <option value="">All types</option>
+          <option>Purchase</option>
+          <option>Points Redeemed</option>
+          <option>Manual Adjustment</option>
+          <option>Refund</option>
+          <option>Class Upgrade</option>
+          <option>Points Expired</option>
+        </select>
+        <button class="btn" id="btn-export-tx">Export CSV</button>
+      </div>
+      <div class="panel" style="padding:0; overflow-x:auto;">
+        <table class="ledger" id="tx-table">
+          <thead><tr>
+            <th>Txn ID</th><th>Type</th><th>Member</th><th class="num">Amount</th><th class="num">Points</th><th>Staff</th><th>Date</th><th></th>
+          </tr></thead>
+          <tbody id="tx-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------- NOTIFICATIONS ---------- -->
+    <section class="view" id="view-notifications">
+      <div class="page-head"><div><h1>Notification Log</h1><p>WhatsApp and email delivery history. Actual sending is handled by a small Cloud Function — see README. Message wording is edited under Loyalty Settings.</p></div></div>
+      <div class="search-row">
+        <select id="nf-channel"><option value="">All channels</option><option>WhatsApp</option><option>Email</option></select>
+        <select id="nf-status"><option value="">All statuses</option><option>Pending</option><option>Sent</option><option>Delivered</option><option>Failed</option></select>
+        <select id="nf-type"><option value="">All types</option><option>Welcome</option><option>Purchase</option><option>Points Redeemed</option><option>Class Upgrade</option><option>Bonus Points</option><option>Birthday</option><option>Account Update</option></select>
+        <button class="btn btn-danger" id="nf-retry-all" style="display:none;">Retry all failed</button>
+      </div>
+      <div class="panel" style="padding:0; overflow-x:auto;">
+        <table class="ledger" id="notif-table">
+          <thead><tr><th>Member</th><th>Channel</th><th>Type</th><th>Message</th><th>Status</th><th>Date</th><th></th></tr></thead>
+          <tbody id="notif-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------- REPORTS ---------- -->
+    <section class="view" id="view-reports">
+      <div class="page-head">
+        <div><h1>Reports &amp; Analytics</h1><p>Loyalty sales, points, redemptions and member growth. Every table can be exported to CSV (opens in Excel).</p></div>
+        <div class="page-actions">
+          <select id="rp-range">
+            <option value="30" selected>Last 30 days</option>
+            <option value="7">Last 7 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last 12 months</option>
+            <option value="all">All time</option>
+          </select>
+        </div>
+      </div>
+      <div id="rp-body"></div>
+    </section>
+
+    <!-- ---------- STAFF ---------- -->
+    <section class="view" id="view-staff">
+      <div class="page-head">
+        <div><h1>Staff &amp; Roles</h1><p>Super Admins manage rules and roles. Managers handle members and redemptions. Staff run the till.</p></div>
+        <div class="page-actions"><button class="btn btn-primary" id="btn-add-staff">+ Add staff</button></div>
+      </div>
+      <div class="panel" style="padding:0; overflow-x:auto;">
+        <table class="ledger" id="staff-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
+          <tbody id="staff-tbody"></tbody>
+        </table>
+      </div>
+      <p class="hint" style="margin-top:10px;">Use “Add staff” to create a login — they get an email to set their own password. Anyone who signs in another way appears here after their first sign-in with the Staff role.</p>
+    </section>
+
+    <!-- ---------- AUDIT LOG ---------- -->
+    <section class="view" id="view-audit">
+      <div class="page-head"><div><h1>Audit Log</h1><p>Every rule change, class edit, point change and administrative action — with who, what, before/after and why.</p></div></div>
+      <div class="search-row">
+        <input type="text" id="audit-search" placeholder="Search action, person or reason…">
+        <button class="btn" id="btn-export-audit">Export CSV</button>
+      </div>
+      <div class="panel" style="padding:0; overflow-x:auto;">
+        <table class="ledger" id="audit-table">
+          <thead><tr><th>Action</th><th>By</th><th>Reason</th><th>Previous</th><th>New</th><th>Date</th></tr></thead>
+          <tbody id="audit-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ================= MODALS ================= -->
+<div class="overlay" id="modal-member-form">
+  <div class="modal">
+    <div class="modal-head"><h3 id="member-form-title">Add member</h3><button class="modal-close" data-close>&times;</button></div>
+    <form id="member-form">
+      <input type="hidden" id="mf-id">
+      <div class="field-row">
+        <div class="field"><label>Full name</label><input type="text" id="mf-fullName" required></div>
+        <div class="field"><label>Phone number</label><input type="text" id="mf-phone" required></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Email address</label><input type="email" id="mf-email"></div>
+        <div class="field"><label>Date of birth</label><input type="date" id="mf-dob"></div>
+      </div>
+      <div class="field" style="margin-bottom:12px;"><label>Address</label><input type="text" id="mf-address"></div>
+      <div class="field-row">
+        <div class="field">
+          <label>Gender (optional)</label>
+          <select id="mf-gender"><option value="">—</option><option>Female</option><option>Male</option><option>Other</option></select>
+        </div>
+        <div class="field"><label>Customer class</label><select id="mf-classId"></select><span class="hint" id="mf-class-hint" style="display:none;"></span></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Membership status</label>
+          <select id="mf-status"><option value="active">Active</option><option value="inactive">Inactive</option></select>
+        </div>
+        <div class="field">
+          <label>Notification preferences</label>
+          <div style="display:flex; gap:14px; padding-top:9px;">
+            <span class="checkbox-row"><input type="checkbox" id="mf-notif-whatsapp" checked><label for="mf-notif-whatsapp">WhatsApp</label></span>
+            <span class="checkbox-row"><input type="checkbox" id="mf-notif-email" checked><label for="mf-notif-email">Email</label></span>
+          </div>
+        </div>
+      </div>
+      <div class="field" style="margin:12px 0 16px;"><label>Notes</label><textarea id="mf-notes" rows="2"></textarea></div>
+      <button class="btn btn-primary btn-block" type="submit">Save member</button>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="modal-class-form">
+  <div class="modal">
+    <div class="modal-head"><h3 id="class-form-title">New class</h3><button class="modal-close" data-close>&times;</button></div>
+    <form id="class-form">
+      <input type="hidden" id="cf-id">
+      <div class="field" style="margin-bottom:12px;"><label>Class name</label><input type="text" id="cf-name" required></div>
+      <div class="field" style="margin-bottom:12px;"><label>Description</label><input type="text" id="cf-description"></div>
+      <div class="field-row">
+        <div class="field"><label>Point multiplier</label><input type="number" id="cf-multiplier" step="0.01" min="0.01" required></div>
+        <div class="field"><label>Minimum spending (₦)</label><input type="number" id="cf-minSpend" min="0" value="0"></div>
+        <div class="field"><label>Maximum spending (₦, optional)</label><input type="number" id="cf-maxSpend" min="0"></div>
+      </div>
+      <div class="field" style="margin:12px 0;"><label>Minimum points requirement (optional)</label><input type="number" id="cf-minPoints" min="0"></div>
+      <div class="field" style="margin-bottom:16px;"><label>Benefits</label><textarea id="cf-benefits" rows="2"></textarea></div>
+      <button class="btn btn-primary btn-block" type="submit">Save class</button>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="modal-scanner">
+  <div class="modal">
+    <div class="modal-head"><h3>Scan QR / Barcode</h3><button class="modal-close" data-close>&times;</button></div>
+    <div id="scanner-video-wrap"><div id="scanner-video"></div></div>
+    <p class="hint" id="scanner-status" style="margin-top:10px;">Point the camera at the member's QR code or barcode.</p>
+  </div>
+</div>
+
+<div class="overlay" id="modal-print-card">
+  <div class="modal">
+    <div class="modal-head"><h3>Membership card</h3><button class="modal-close" data-close>&times;</button></div>
+    <div id="print-area"></div>
+    <button class="btn btn-primary btn-block" style="margin-top:16px;" onclick="window.print()">Print card</button>
+  </div>
+</div>
+
+<div class="overlay" id="modal-staff-form">
+  <div class="modal">
+    <div class="modal-head"><h3>Add staff</h3><button class="modal-close" data-close>&times;</button></div>
+    <form id="staff-form">
+      <div class="field" style="margin-bottom:12px;"><label>Full name</label><input type="text" id="sf-name" required></div>
+      <div class="field" style="margin-bottom:12px;"><label>Email</label><input type="email" id="sf-email" required></div>
+      <div class="field" style="margin-bottom:12px;"><label>Role</label>
+        <select id="sf-role"><option value="staff">Staff</option><option value="manager">Manager</option><option value="superadmin">Super Admin</option></select>
+      </div>
+      <p class="hint" style="margin-bottom:14px;">They'll receive an email with a link to set their password.</p>
+      <button class="btn btn-primary btn-block" type="submit">Create account</button>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="modal-staff-activity">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-head"><h3 id="sa-title">Activity</h3><button class="modal-close" data-close>&times;</button></div>
+    <div id="sa-body"></div>
+  </div>
+</div>
+
+<div id="toast-host"></div>
+
+<!-- ================= SCRIPTS ================= -->
+<!-- Firebase (compat build — simplest to drop in without a bundler) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<!-- QR + barcode generation, camera scanning -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/scanner.js"></script>
+<script src="js/members.js"></script>
+<script src="js/classes.js"></script>
+<script src="js/checkout.js"></script>
+<script src="js/redeem.js"></script>
+<script src="js/adjust.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/transactions.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/staff.js"></script>
+<script src="js/audit.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

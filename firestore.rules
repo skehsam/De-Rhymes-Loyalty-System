@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isStaff() {
+      return signedIn() && exists(/databases/$(database)/documents/staff/$(request.auth.uid));
+    }
+    function myRole() {
+      return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.role;
+    }
+    function isManager() { return isStaff() && myRole() in ['manager', 'superadmin']; }
+    function isSuper()   { return isStaff() && myRole() == 'superadmin'; }
+
+    // Anyone signed in can read staff (needed at login). New users can only
+    // create their own record as plain "staff". Only Super Admins change roles.
+    match /staff/{uid} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.auth.uid == uid
+                    && request.resource.data.role == 'staff';
+      allow update: if isSuper();
+      allow delete: if false;
+    }
+
+    match /members/{id} {
+      allow read, create, update: if isStaff();
+      allow delete: if isSuper();
+    }
+
+    match /classes/{id} {
+      allow read: if isStaff();
+      allow write: if isSuper();
+    }
+
+    match /settings/{doc} {
+      allow read: if isStaff();
+      allow write: if isSuper();
+    }
+
+    // Append-only ledger. Adjustments and refunds need Manager or above.
+    match /transactions/{id} {
+      allow read: if isStaff();
+      allow create: if isStaff() && (
+        !(request.resource.data.type in ['Manual Adjustment', 'Refund']) || isManager()
+      );
+      allow update, delete: if false;
+    }
+
+    match /classHistory/{id} {
+      allow read, create: if isStaff();
+      allow update, delete: if false;
+    }
+
+    match /notifications/{id} {
+      allow read, create: if isStaff();
+      allow update: if isManager();
+      allow delete: if false;
+    }
+
+    match /auditLog/{id} {
+      allow read: if isSuper();
+      allow create: if isStaff();
+      allow update, delete: if false;
+    }
+
+    match /counters/{id} {
+      allow read, create, update: if isStaff();
+    }
+  }
+}
