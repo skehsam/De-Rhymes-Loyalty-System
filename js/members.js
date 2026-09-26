@@ -14,7 +14,6 @@ const Members = {
     document.getElementById('btn-back-members').onclick = () => App.go('members');
     document.getElementById('mp-charge').onclick = () => App.go('checkout', { memberId: this.currentProfileId, skipToStep: 2 });
     document.getElementById('mp-edit').onclick = () => this.openForm(this.currentProfileId);
-    document.getElementById('mp-birthday').onclick = () => this.sendBirthday();
     document.getElementById('mp-toggle-status').onclick = () => this.toggleStatus();
     document.getElementById('mp-reissue').onclick = () => this.reissueCard();
     document.getElementById('btn-export-members').onclick = () => this.exportCsv();
@@ -129,23 +128,6 @@ const Members = {
       Utils.toast('New card issued. The old card no longer works.', 'success');
       await this.openProfile(m.memberId, true); // opens the printable card
     } catch (err) { Utils.toast(err.message, 'error'); }
-  },
-
-  async sendBirthday() {
-    const m = this.currentMember;
-    if (!m) return;
-    if (!confirm(`Send ${m.fullName} a birthday message now (via their enabled channels)?`)) return;
-    const btn = document.getElementById('mp-birthday');
-    btn.disabled = true;
-    try {
-      await DB.sendBirthdayNow(m.memberId, Auth.currentUser.email);
-      Utils.toast('Birthday message queued', 'success');
-      this.selectTab('notifications');
-    } catch (err) {
-      Utils.toast(err.message, 'error');
-    } finally {
-      btn.disabled = false;
-    }
   },
 
   cardFooter() {
@@ -365,6 +347,14 @@ const Members = {
       host.innerHTML = mine.length ? `<table class="ledger"><thead><tr><th>Channel</th><th>Type</th><th>Message</th><th>Status</th><th>Date</th></tr></thead><tbody>${
         mine.map(n => `<tr><td>${n.channel}</td><td>${n.type}</td><td>${Utils.escapeHtml(n.message)}</td><td><span class="pill ${n.status==='Failed'?'negative':n.status==='Delivered'?'positive':'muted'}">${n.status}</span></td><td>${Utils.formatDate(n.sentDate)}</td></tr>`).join('')
       }</tbody></table>` : `<div class="empty-state">No notifications sent yet.</div>`;
+      return;
+    }
+    if (tab === 'installments') {
+      if (window.Installments && Installments.renderCustomerTab) {
+        host.innerHTML = await Installments.renderCustomerTab(member.memberId);
+      } else {
+        host.innerHTML = `<div class="empty-state">Installments module not loaded.</div>`;
+      }
       return;
     }
     if (tab === 'membership') {

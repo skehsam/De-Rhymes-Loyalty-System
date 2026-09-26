@@ -18,6 +18,16 @@ const PERMISSIONS = {
   manageStaff: ['superadmin'],
   viewAuditLog: ['superadmin'],
   viewReports: ['superadmin', 'manager'],
+
+  // Installment Payment Management (spec: staff can create/record if permitted,
+  // manager can approve corrections, only superadmin/manager can void/correct
+  // or manage installment settings / reopen a completed installment).
+  viewInstallments: ['superadmin', 'manager', 'staff'],
+  recordInstallments: ['superadmin', 'manager', 'staff'],
+  correctInstallmentPayments: ['superadmin', 'manager'],
+  reopenInstallments: ['superadmin'],
+  manageInstallmentSettings: ['superadmin'],
+  viewInstallmentReports: ['superadmin', 'manager'],
 };
 
 const Auth = {

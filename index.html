@@ -69,6 +69,14 @@
       </div>
 
       <div class="nav-group">
+        <div class="nav-group-label">INSTALLMENTS</div>
+        <button type="button" class="nav-item" data-view="installments-dashboard" data-requires="viewInstallments"><span class="dot"></span>Dashboard</button>
+        <button type="button" class="nav-item" data-view="installments" data-requires="viewInstallments"><span class="dot"></span>All Installments</button>
+        <button type="button" class="nav-item" data-view="installment-payments" data-requires="viewInstallments"><span class="dot"></span>Payments</button>
+        <button type="button" class="nav-item" data-view="installment-reports" data-requires="viewInstallmentReports"><span class="dot"></span>Reports</button>
+      </div>
+
+      <div class="nav-group">
         <div class="nav-group-label">ADMIN</div>
         <button type="button" class="nav-item" data-view="classes" data-requires="manageClasses"><span class="dot"></span>Customer Classes</button>
         <button type="button" class="nav-item" data-view="settings" data-requires="editLoyaltyRules"><span class="dot"></span>Loyalty Settings</button>
@@ -178,7 +186,6 @@
         </div>
         <div class="page-actions">
           <button class="btn" id="mp-edit">Edit details</button>
-          <button class="btn" id="mp-birthday">🎂 Send birthday message</button>
           <button class="btn" id="mp-reissue">Reissue card</button>
           <button class="btn btn-danger" id="mp-toggle-status">Deactivate member</button>
           <button class="btn btn-primary" id="mp-charge">Record purchase</button>
@@ -196,6 +203,7 @@
               <div class="tab" data-tab="points">Points</div>
               <div class="tab" data-tab="redemptions">Redemptions</div>
               <div class="tab" data-tab="notifications">Notifications</div>
+              <div class="tab" data-tab="installments">Installments</div>
               <div class="tab" data-tab="membership">Membership</div>
             </div>
             <div id="mp-tab-content"></div>
@@ -269,7 +277,16 @@
         <div class="checkbox-row" style="margin-bottom:10px;"><input type="checkbox" id="set-whatsapp"><label for="set-whatsapp">WhatsApp notifications enabled</label></div>
         <div class="checkbox-row" style="margin-bottom:10px;"><input type="checkbox" id="set-email"><label for="set-email">Email notifications enabled</label></div>
         <div class="checkbox-row"><input type="checkbox" id="set-birthday"><label for="set-birthday">Birthday messages enabled</label></div>
-        <p class="hint" style="margin-top:10px;">Sent automatically once a day to every active member whose date of birth is today (needs the scheduled Cloud Function deployed — see README). Staff can also send one early from a member's profile.</p>
+      </div>
+      <div class="panel" style="margin-top:16px;" data-requires="manageInstallmentSettings">
+        <p class="panel-title">Installment notifications</p>
+        <div class="checkbox-row" style="margin-bottom:10px;"><input type="checkbox" id="set-ins-upcoming"><label for="set-ins-upcoming">Upcoming payment reminder</label></div>
+        <div class="checkbox-row" style="margin-bottom:10px;"><input type="checkbox" id="set-ins-due"><label for="set-ins-due">Payment due today</label></div>
+        <div class="checkbox-row" style="margin-bottom:10px;"><input type="checkbox" id="set-ins-overdue"><label for="set-ins-overdue">Overdue payment</label></div>
+        <div class="checkbox-row" style="margin-bottom:10px;"><input type="checkbox" id="set-ins-received"><label for="set-ins-received">Payment received</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="set-ins-completed"><label for="set-ins-completed">Installment completed</label></div>
+        <div class="field" style="margin-top:12px; max-width:260px;"><label>Remind this many days before a payment is due</label><input type="number" id="set-ins-remind-days" min="0"></div>
+        <button class="btn btn-sm btn-primary" type="button" id="btn-save-installment-settings" style="margin-top:12px;">Save installment notification settings</button>
       </div>
       <div class="grid grid-2" style="margin-top:16px;">
         <div class="panel">
@@ -323,6 +340,7 @@
           <option>Refund</option>
           <option>Class Upgrade</option>
           <option>Points Expired</option>
+          <option>Installment Payment</option>
         </select>
         <button class="btn" id="btn-export-tx">Export CSV</button>
       </div>
@@ -342,7 +360,7 @@
       <div class="search-row">
         <select id="nf-channel"><option value="">All channels</option><option>WhatsApp</option><option>Email</option></select>
         <select id="nf-status"><option value="">All statuses</option><option>Pending</option><option>Sent</option><option>Delivered</option><option>Failed</option></select>
-        <select id="nf-type"><option value="">All types</option><option>Welcome</option><option>Purchase</option><option>Points Redeemed</option><option>Class Upgrade</option><option>Bonus Points</option><option>Birthday</option><option>Account Update</option></select>
+        <select id="nf-type"><option value="">All types</option><option>Welcome</option><option>Purchase</option><option>Points Redeemed</option><option>Class Upgrade</option><option>Bonus Points</option><option>Account Update</option><option>Installment Payment</option><option>Installment Upcoming</option><option>Installment Due</option><option>Installment Overdue</option><option>Installment Completed</option></select>
         <button class="btn btn-danger" id="nf-retry-all" style="display:none;">Retry all failed</button>
       </div>
       <div class="panel" style="padding:0; overflow-x:auto;">
@@ -398,6 +416,109 @@
           <tbody id="audit-tbody"></tbody>
         </table>
       </div>
+    </section>
+
+    <!-- ---------- INSTALLMENTS DASHBOARD ---------- -->
+    <section class="view" id="view-installments-dashboard">
+      <div class="page-head">
+        <div><h1>Installments Dashboard</h1><p>Installment purchases, collections and what's coming due.</p></div>
+        <div class="page-actions">
+          <button class="btn btn-primary" id="ins-dash-add" data-requires="recordInstallments">+ Add installment purchase</button>
+        </div>
+      </div>
+      <div id="ins-dash-stats" class="grid grid-4"></div>
+      <div class="grid grid-2" style="margin-top:16px;">
+        <div class="panel">
+          <p class="panel-title">Recent payments</p>
+          <div id="ins-dash-recent"></div>
+        </div>
+        <div class="panel">
+          <p class="panel-title">Upcoming payments</p>
+          <div id="ins-dash-upcoming"></div>
+        </div>
+        <div class="panel" style="grid-column:1 / -1;">
+          <p class="panel-title">Overdue payments</p>
+          <div id="ins-dash-overdue"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- ALL INSTALLMENTS ---------- -->
+    <section class="view" id="view-installments">
+      <div class="page-head">
+        <div><h1>Installment Purchases</h1><p>Every installment plan — search by customer, product, installment ID or staff.</p></div>
+        <div class="page-actions">
+          <button class="btn btn-primary" id="ins-list-add" data-requires="recordInstallments">+ Add installment purchase</button>
+        </div>
+      </div>
+      <div class="search-row">
+        <input type="text" id="ins-search" placeholder="Search customer, product, installment ID…">
+        <select id="ins-filter-status">
+          <option value="">All statuses</option>
+          <option>Active</option>
+          <option>Overdue</option>
+          <option>Completed</option>
+          <option>Cancelled</option>
+        </select>
+        <button class="btn" id="ins-export">Export CSV</button>
+      </div>
+      <div class="panel" style="padding:0; overflow-x:auto;">
+        <table class="ledger" id="ins-table">
+          <thead><tr>
+            <th>Installment</th><th>Customer</th><th>Item</th><th class="num">Total</th><th>Progress</th><th class="num">Balance</th><th>Next payment</th><th>Status</th>
+          </tr></thead>
+          <tbody id="ins-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------- INSTALLMENT PROFILE ---------- -->
+    <section class="view" id="view-installment-profile">
+      <div class="page-head">
+        <div>
+          <button class="btn btn-sm btn-ghost" id="ins-back">&larr; Back to installments</button>
+          <h1 id="ip-title" style="margin-top:8px;">Installment</h1>
+          <p id="ip-sub"></p>
+        </div>
+        <div class="page-actions" id="ip-actions"></div>
+      </div>
+      <div id="ip-body"></div>
+    </section>
+
+    <!-- ---------- INSTALLMENT PAYMENTS LOG ---------- -->
+    <section class="view" id="view-installment-payments">
+      <div class="page-head"><div><h1>Installment Payments</h1><p>Every installment payment collected, with the audit trail (voided/corrected payments stay visible).</p></div></div>
+      <div class="search-row">
+        <input type="text" id="insp-search" placeholder="Customer, installment ID or reference…">
+        <select id="insp-filter-method"><option value="">All methods</option><option>Cash</option><option>Bank Transfer</option><option>POS</option><option>Card</option><option>Other</option></select>
+        <select id="insp-filter-staff"><option value="">All staff</option></select>
+        <input type="date" id="insp-filter-from" title="From date">
+        <input type="date" id="insp-filter-to" title="To date">
+        <button class="btn" id="insp-export">Export CSV</button>
+      </div>
+      <div class="panel" style="padding:0; overflow-x:auto;">
+        <table class="ledger" id="insp-table">
+          <thead><tr><th>Payment</th><th>Customer</th><th>Installment</th><th class="num">Amount</th><th>Method</th><th>Collected by</th><th>Date</th><th>Status</th><th></th></tr></thead>
+          <tbody id="insp-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------- INSTALLMENT REPORTS ---------- -->
+    <section class="view" id="view-installment-reports">
+      <div class="page-head">
+        <div><h1>Installment Reports</h1><p>Sales, collections, staff performance and outstanding balances. Every table exports to CSV.</p></div>
+        <div class="page-actions">
+          <select id="insr-range">
+            <option value="30" selected>Last 30 days</option>
+            <option value="7">Last 7 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last 12 months</option>
+            <option value="all">All time</option>
+          </select>
+        </div>
+      </div>
+      <div id="insr-body"></div>
     </section>
 
   </main>
@@ -501,6 +622,89 @@
   </div>
 </div>
 
+<div class="overlay" id="modal-installment-form">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-head"><h3>New installment purchase</h3><button class="modal-close" data-close>&times;</button></div>
+    <form id="installment-form">
+      <div class="field" style="margin-bottom:12px;">
+        <label>Customer</label>
+        <input type="text" id="if-customer-search" placeholder="Search by name, phone or Member ID…" autocomplete="off">
+        <input type="hidden" id="if-memberId">
+        <div id="if-customer-results"></div>
+        <p class="hint" id="if-customer-selected" style="margin-top:6px;"></p>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Item / Product</label><input type="text" id="if-product" required></div>
+        <div class="field"><label>Product / Item code</label><input type="text" id="if-productCode"></div>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label>Item photo (optional)</label>
+        <input type="file" id="if-photo-input" accept="image/*" capture="environment" style="display:none;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button type="button" class="btn btn-sm" id="if-photo-btn">📷 Snap / add photo</button>
+          <button type="button" class="btn btn-sm btn-danger" id="if-photo-remove" style="display:none;">Remove</button>
+        </div>
+        <div id="if-photo-preview" style="margin-top:10px;"></div>
+      </div>
+      <div class="field-row" style="margin-top:12px;">
+        <div class="field"><label>Quantity</label><input type="number" id="if-quantity" min="1" value="1" required></div>
+        <div class="field"><label>Total purchase price (₦)</label><input type="number" id="if-totalPrice" min="1" step="0.01" required></div>
+        <div class="field"><label>Initial payment (₦)</label><input type="number" id="if-initialPayment" min="0" step="0.01" value="0"></div>
+      </div>
+      <div class="field-row" style="margin-top:12px;">
+        <div class="field">
+          <label>Installment frequency</label>
+          <select id="if-frequency"><option>Weekly</option><option>Bi-weekly</option><option selected>Monthly</option><option value="Custom">Custom</option></select>
+        </div>
+        <div class="field" id="if-custom-days-wrap" style="display:none;"><label>Custom interval (days)</label><input type="number" id="if-customDays" min="1"></div>
+        <div class="field"><label>Expected payment amount (₦)</label><input type="number" id="if-expectedPaymentAmount" min="0" step="0.01"></div>
+      </div>
+      <div class="field-row" style="margin-top:12px;">
+        <div class="field"><label>Start date</label><input type="date" id="if-startDate" required></div>
+        <div class="field"><label>Expected completion date</label><input type="date" id="if-expectedCompletionDate"></div>
+      </div>
+      <div class="field" style="margin:12px 0 16px;"><label>Notes</label><textarea id="if-notes" rows="2"></textarea></div>
+      <p class="hint" id="if-preview" style="margin-bottom:12px;"></p>
+      <button class="btn btn-primary btn-block" type="submit">Create installment</button>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="modal-installment-payment">
+  <div class="modal">
+    <div class="modal-head"><h3>Record payment</h3><button class="modal-close" data-close>&times;</button></div>
+    <form id="installment-payment-form">
+      <p class="hint" id="ipf-context" style="margin-bottom:12px;"></p>
+      <div class="field-row">
+        <div class="field"><label>Payment amount (₦)</label><input type="number" id="ipf-amount" min="0.01" step="0.01" required></div>
+        <div class="field"><label>Payment date</label><input type="date" id="ipf-date" required></div>
+      </div>
+      <div class="field-row" style="margin-top:12px;">
+        <div class="field">
+          <label>Payment method</label>
+          <select id="ipf-method"><option>Cash</option><option>Bank Transfer</option><option>POS</option><option>Card</option><option>Other</option></select>
+        </div>
+        <div class="field"><label>Transaction reference (optional)</label><input type="text" id="ipf-reference"></div>
+      </div>
+      <div class="field" style="margin:12px 0;"><label>Notes (optional)</label><textarea id="ipf-notes" rows="2"></textarea></div>
+      <p class="hint" id="ipf-preview"></p>
+      <button class="btn btn-primary btn-block" style="margin-top:12px;" type="submit">Record payment</button>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="modal-void-payment">
+  <div class="modal">
+    <div class="modal-head"><h3>Void / correct payment</h3><button class="modal-close" data-close>&times;</button></div>
+    <form id="void-payment-form">
+      <p class="hint" id="vpf-context" style="margin-bottom:12px;"></p>
+      <div class="field" style="margin-bottom:12px;"><label>Reason for correction (required)</label><input type="text" id="vpf-reason" required></div>
+      <p class="hint">This keeps the original payment in the audit trail — it is marked voided, never deleted. The balance and any loyalty points earned on this payment are reversed.</p>
+      <button class="btn btn-danger btn-block" style="margin-top:14px;" type="submit">Void this payment</button>
+    </form>
+  </div>
+</div>
+
 <div id="toast-host"></div>
 
 <!-- ================= SCRIPTS ================= -->
@@ -531,6 +735,7 @@
 <script src="js/audit.js"></script>
 <script src="js/reports.js"></script>
 <script src="js/dashboard.js"></script>
+<script src="js/installments.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

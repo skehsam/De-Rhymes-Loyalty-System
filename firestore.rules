@@ -66,5 +66,27 @@ service cloud.firestore {
     match /counters/{id} {
       allow read, create, update: if isStaff();
     }
+
+    // ---- Installments (spec: Installment Payment Management) ----
+    // Any staff can create/record installments and payments against them
+    // (recordInstallments allows staff/manager/superadmin in js/auth.js).
+    // Updates to an installment doc happen both from ordinary payment
+    // recording (staff) and from voiding a payment / reopening (manager+),
+    // so the doc itself stays staff-writable; the stricter gate lives on
+    // the payment doc below, mirroring correctInstallmentPayments.
+    match /installments/{id} {
+      allow read: if isStaff();
+      allow create, update: if isStaff();
+      allow delete: if false;
+    }
+
+    // Append-mostly log of payments. Only a Manager/Super Admin can flip
+    // status to Voided (correctInstallmentPayments), same as refunds above.
+    match /installmentPayments/{id} {
+      allow read: if isStaff();
+      allow create: if isStaff();
+      allow update: if isManager();
+      allow delete: if false;
+    }
   }
 }

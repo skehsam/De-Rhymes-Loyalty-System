@@ -24,6 +24,7 @@ const App = {
     ['Staff', 'manageStaff'],
     ['AuditView', 'viewAuditLog'],
     ['Dashboard', 'viewDashboard'],
+    ['Installments', 'viewInstallments'],
   ],
 
   async loadAllModules() {
@@ -44,8 +45,10 @@ const App = {
 
   go(view, opts = {}) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    // A member's profile lives under "Members" in the nav.
-    const navView = view === 'member-profile' ? 'members' : view;
+    // A member's profile lives under "Members" in the nav; an installment's
+    // detail page lives under "All Installments".
+    const navView = view === 'member-profile' ? 'members'
+      : view === 'installment-profile' ? 'installments' : view;
     document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === navView));
     const target = document.getElementById('view-' + view);
     if (target) target.classList.add('active');
@@ -66,6 +69,10 @@ const App = {
       staff: () => Staff.load(),
       audit: () => AuditView.load(),
       settings: () => Settings.load(),
+      'installments-dashboard': () => Installments.loadDashboard(),
+      installments: () => Installments.loadList(),
+      'installment-payments': () => Installments.loadPaymentsLog(),
+      'installment-reports': () => Installments.loadReports(),
     };
     if (refreshers[view]) {
       Promise.resolve()
@@ -171,22 +178,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   try {
     await Auth.login(email, password);
   } catch (err) {
-    console.error('Sign-in failed:', err.code, err.message);
-    const msgs = {
-      'auth/invalid-email': 'That email address isn\'t valid.',
-      'auth/user-not-found': 'No account exists for that email. Ask a Super Admin to create one under Authentication → Users, or Staff & Roles.',
-      'auth/wrong-password': 'Incorrect password.',
-      'auth/invalid-credential': 'Incorrect email or password.',
-      'auth/invalid-login-credentials': 'Incorrect email or password.',
-      'auth/user-disabled': 'This account has been disabled.',
-      'auth/too-many-requests': 'Too many failed attempts. Wait a few minutes and try again.',
-      'auth/network-request-failed': 'Network problem. Check your connection.',
-      'auth/api-key-not-valid': 'invalid API key .',
-      'auth/invalid-api-key': 'Firebase isn\'t configured correctly (invalid API key in js/firebase-config.js).',
-      'auth/configuration-not-found': 'Email/Password sign-in isn\'t enabled for this Firebase project (Authentication → Sign-in method).',
-    };
-    errEl.textContent = msgs[err.code] ||
-      (err.code ? `Could not sign in (${err.code}).` : 'Could not sign in — is js/firebase-config.js set up? Check the browser console for details.');
+    errEl.textContent = 'Could not sign in — check the email and password.';
   }
 });
 
